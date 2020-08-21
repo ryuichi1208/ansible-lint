@@ -1,6 +1,10 @@
 """Utils to generate rule table .rst documentation."""
 import logging
 
+from rich import box, console
+from rich.markdown import Markdown
+from rich.table import Table
+
 from ansiblelint.rules import RulesCollection
 
 DOC_HEADER = """
@@ -41,3 +45,19 @@ def rules_as_rst(rules: RulesCollection) -> str:
         r += f"\n\n.. _{d.id}:\n\n{title}\n{'*' * len(title)}\n\n{d.description}"
 
     return r
+
+
+def rules_as_rich(rules: RulesCollection) -> str:
+    """Print documentation for a list of rules, returns empty string."""
+    con = console.Console()
+    for d in rules:
+        table = Table(show_header=True, header_style="bold magenta", box=box.MINIMAL)
+        table.add_column(d.id, style="dim", width=16)
+        table.add_column(Markdown(d.shortdesc))
+        table.add_row("description", Markdown(d.description))
+        table.add_row("version_added", d.version_added)
+        table.add_row("tags", ", ".join(d.tags))
+        table.add_row("severity", d.severity)
+        con.print(table)
+
+    return ""

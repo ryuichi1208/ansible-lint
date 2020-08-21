@@ -31,7 +31,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from ansiblelint import cli, formatters
-from ansiblelint.generate_docs import rules_as_rst
+from ansiblelint.generate_docs import rules_as_rich, rules_as_rst
 from ansiblelint.rules import RulesCollection
 from ansiblelint.runner import Runner
 from ansiblelint.utils import get_playbooks_and_roles, get_rules_dirs
@@ -42,7 +42,12 @@ if TYPE_CHECKING:
     from ansiblelint.errors import MatchError
 
 _logger = logging.getLogger(__name__)
-console = Console()
+
+_rule_format_map = {
+    'plain': lambda x: x,  # str upsets mypy
+    'rich': rules_as_rich,
+    'rst': rules_as_rst
+}
 
 
 def initialize_logger(level: int = 0) -> None:
@@ -91,6 +96,7 @@ skip_list:
     for id in sorted(matched_rules.keys()):
         msg += f"  - '{id}'  # {matched_rules[id]}'\n"
     msg += "```"
+    console = Console()
     console.print(Markdown(msg))
 
 
@@ -111,7 +117,7 @@ def main() -> int:
     rules = RulesCollection(rulesdirs)
 
     if options.listrules:
-        formatted_rules = rules if options.format == 'plain' else rules_as_rst(rules)
+        formatted_rules = _rule_format_map[options.format](rules)
         print(formatted_rules)
         return 0
 
